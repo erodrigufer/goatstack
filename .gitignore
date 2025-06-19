@@ -1,0 +1,23 @@
+# Backups
+*.bak
+/backups
+
+# Ignore builds from air.
+**/tmp
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool.
+*.out
+
+# Go workspace file.
+go.work
+go.work.sum
+
+# env files.
+.env
+.envrc
+
+# builds.
+/build
