@@ -1,0 +1,29 @@
+package server
+
+import (
+	"net/http"
+
+	"{{.ModuleName}}/internal/server/handlers"
+	"{{.ModuleName}}/internal/server/middlewares"
+	"{{.ModuleName}}/internal/static"
+)
+
+func (app *Application) defineEndpoints() (http.Handler, error) {
+	mux := http.NewServeMux()
+
+	m := middlewares.NewMiddlewares(app.InfoLog, app.ErrorLog)
+
+	h := handlers.NewHandlers(app.InfoLog, app.ErrorLog, app.db)
+
+	fileServer := http.FileServer(http.FS(static.STATIC_CONTENT))
+
+	middlewareChain := func(next http.Handler) http.Handler {
+		return m.RecoverPanic(m.SecureHeaders(m.LogRequest(next)))
+	}
+
+	mux.Handle("GET /content/", fileServer)
+	mux.Handle("GET /api/v1/health", h.GetHealth())
+	mux.Handle("GET /", h.GetHome())
+
+	return middlewareChain(mux), nil
+}

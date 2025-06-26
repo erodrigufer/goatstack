@@ -1,0 +1,18 @@
+package handlers
+
+import (
+	"net/http"
+
+	"{{.ModuleName}}/internal/views"
+	"{{.ModuleName}}/internal/web"
+)
+
+func (h *Handlers) GetHome() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := web.RenderComponent(r.Context(), w, views.Home())
+		if err != nil {
+			web.HandleServerError(w, r, err, h.errorLog)
+			return
+		}
+	}
+}

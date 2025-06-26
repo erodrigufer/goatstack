@@ -1,0 +1,52 @@
+package views
+
+import (
+	"strconv"
+	"time"
+)
+
+css footer() {
+	text-align: center;
+	margin: 2rem auto 1rem auto;
+}
+
+css h1() {
+	color: { h1Color };
+}
+
+templ base() {
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="theme-color" content="hsl(220, 24%, 10%)"/>
+			<link rel="stylesheet" href="/content/base.css"/>
+			<title>{{.MainName}}</title>
+			<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+			<script src="https://unpkg.com/htmx-ext-response-targets@2.0.2" crossorigin="anonymous"></script>
+		</head>
+		<body hx-ext="response-targets">
+			<h1 class={ h1() }>{{.MainName}}</h1>
+			<main>
+				{ children... }
+			</main>
+		</body>
+		@baseFooter()
+	</html>
+}
+
+templ baseFooter() {
+	<style>
+  footer a {
+    color: hsl(210, 100%, 60%);
+  }
+  footer a:hover {
+    color: hsl(210, 100%, 70%);
+  }
+  </style>
+	<footer class={ footer() }>
+		Developed by <a href="https://github.com/erodrigufer" target="_blank">Eduardo Rodriguez </a> &copy; { 
+  strconv.Itoa(time.Now().Year()) }
+	</footer>
+}

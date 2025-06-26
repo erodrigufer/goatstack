@@ -1,0 +1,38 @@
+:root {
+  --main-bg-color: hsl(220, 24%, 10%);
+  --general-color: hsl(219, 13%, 79%);
+}
+
+body {
+  font-family: "Open Sans", Verdana, sans-serif;
+  font-size: 12pt;
+  line-height: 1.45rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 0.8rem;
+  margin-right: 0.6rem;
+  background-color: var(--main-bg-color);
+  color: var(--general-color);
+  min-height: 100vh;
+
+  /*Only large viewports should restrict the max-width,*/
+  /*otherwise mobile is not wide enough!*/
+  @media (width >= 1200px) {
+    max-width: 50vw;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Override anchor styles */
+a,
+a:visited,
+a:hover,
+a:active,
+a:link {
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}

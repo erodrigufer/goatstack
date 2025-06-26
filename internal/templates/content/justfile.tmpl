@@ -1,0 +1,74 @@
+set shell := ["/bin/sh", "-c"]
+
+DBMATE_GENERAL_OPTIONS := "--migrations-dir ./db/migrations"
+
+default:
+  @just --list
+
+# vet.
+[group('go')]
+vet: templ
+  cd backend && go vet ./...
+
+# Start the dev server with air.
+[group('go')]
+dev:
+  cd backend && air
+
+# generate templ files.
+[group('go')]
+templ:
+  cd backend && go tool templ generate -path ./internal/views
+
+# remove temporary files.
+clean:
+  cd backend && rm -rf ./tmp
+
+# build for deployment.
+[group('deployment')]
+build: vet templ
+  rm -rf ./build
+  cd backend && env GOOS=freebsd GOARCH=amd64 go build -o ../build/{{.MainName}} ./cmd/{{.MainName}}
+
+# deploy.
+[group('deployment')]
+deploy: build
+  @ssh -i ${DEPLOY_KEY} ${DEPLOY_USER}@${DEPLOY_HOST} service {{.DaemonName}} stop
+  @scp -i ${DEPLOY_KEY} ./build/{{.DaemonName}} ${DEPLOY_USER}@${DEPLOY_HOST}:/usr/local/bin/{{.DaemonName}}
+  @ssh -i ${DEPLOY_KEY} ${DEPLOY_USER}@${DEPLOY_HOST} service {{.DaemonName}} start
+
+# ssh into deploy server.
+[group('deployment')]
+ssh:
+  @ssh -i ${DEPLOY_KEY} ${DEPLOY_USER}@${DEPLOY_HOST}
+
+# create db backup.
+[group('deployment')]
+backup:
+  @scp -i ${DEPLOY_KEY} ${DEPLOY_USER}@${DEPLOY_HOST}:/usr/local/share/{{.DaemonName}}.d/{{.DaemonName}}.sqlite3 ./backups
+  @mv ./backups/{{.DaemonName}}.sqlite3 ./backups/{{.DaemonName}}-$(date -I).sqlite3
+
+# open sqlite cli.
+[group('sql')]
+sql:
+  cd db && sqlite3 database.sqlite3
+
+# run database migrations.
+# [group('sql')]
+# migrate: 
+#     dbmate {{"{{"}}DBMATE_GENERAL_OPTIONS{{"}}"}} up
+
+# rollback the last database migration.
+[group('sql')]
+rollback: 
+    dbmate {{"{{"}}DBMATE_GENERAL_OPTIONS{{"}}"}} rollback
+
+# drop the db managed by dbmate.
+[group('sql')]
+drop:
+    dbmate {{"{{"}}DBMATE_GENERAL_OPTIONS{{"}}"}} drop
+
+# create a new migration file with name `MIGRATION_NAME`.
+[group('sql')]
+new MIGRATION_NAME:
+  dbmate {{"{{"}}DBMATE_GENERAL_OPTIONS{{"}}"}} new {{"{{"}}MIGRATION_NAME{{"}}"}}
