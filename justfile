@@ -21,7 +21,7 @@ vet:
 # go test.
 [group('go')]
 test:
-  gotest ./...
+  go tool gotest ./...
 
 # go build.
 [group('go')]
