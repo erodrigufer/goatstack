@@ -127,15 +127,21 @@ func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) {
 }
 
 func (app *Application) setupLoggers() error {
-	app.InfoLog = slog.New(tint.NewHandler(os.Stdout, nil))
-	app.ErrorLog = slog.New(tint.NewHandler(os.Stderr, nil))
-
-	environmentValue, err := app.GetConfigValueString("ENVIRONMENT")
+	environment, err := app.GetConfigValueString("ENVIRONMENT")
 	if err != nil {
-		return fmt.Errorf("unable to get config value: %w", err)
+		return fmt.Errorf("unable to get environment value: %w", err)
 	}
-	app.InfoLog = app.InfoLog.With("environment", environmentValue)
-	app.ErrorLog = app.ErrorLog.With("environment", environmentValue)
+
+	if environment != "prod" {
+		app.InfoLog = slog.New(tint.NewHandler(os.Stdout, nil))
+		app.ErrorLog = slog.New(tint.NewHandler(os.Stderr, nil))
+	} else {
+		app.InfoLog = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+		app.ErrorLog = slog.New(slog.NewJSONHandler(os.Stderr, nil))
+	}
+
+	app.InfoLog = app.InfoLog.With("environment", environment)
+	app.ErrorLog = app.ErrorLog.With("environment", environment)
 
 	return nil
 }
