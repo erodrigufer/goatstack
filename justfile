@@ -9,11 +9,6 @@ default:
 clean:
   rm -rf ./build ./tmp
 
-# Start the server with air.
-[group('go')]
-dev: vet test
-  air
-
 # go vet.
 [group('go')]
 vet:
