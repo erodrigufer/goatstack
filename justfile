@@ -5,6 +5,7 @@ default:
   @just --list
 
 # Remove build and tmp folders.
+[group('build')]
 clean:
   rm -rf ./build ./tmp
 
@@ -24,6 +25,6 @@ test:
   go tool gotest ./...
 
 # go build.
-[group('go')]
+[group('build')]
 build: vet test clean
   go build -o ./build/goatstack ./cmd/goatstack
