@@ -5,10 +5,10 @@ DBMATE_GENERAL_OPTIONS := "--migrations-dir ./db/migrations"
 default:
   @just --list
 
-# vet.
+# go vet.
 [group('go')]
 vet: templ
-  cd backend && go vet ./...
+  @cd backend && go vet ./... && echo "🆗 go vet was successfully executed."
 
 # Start the dev server with air.
 [group('go')]
@@ -18,17 +18,16 @@ dev:
 # generate templ files.
 [group('go')]
 templ:
-  cd backend && go tool templ generate -path ./internal/views
+  @cd backend && go tool templ generate -path ./internal/views && echo "🆗 successfully generated views from templ files."
 
 # remove temporary files.
 clean:
-  cd backend && rm -rf ./tmp
+  @rm -rf ./build && cd backend && rm -rf ./tmp && echo "🆗 clean was successfully executed."
 
 # build for deployment.
 [group('deployment')]
-build: vet templ
-  rm -rf ./build
-  cd backend && env GOOS=freebsd GOARCH=amd64 go build -o ../build/{{.MainName}} ./cmd/{{.MainName}}
+build: clean vet templ
+  @cd backend && env GOOS=freebsd GOARCH=amd64 go build -o ../build/{{.MainName}} ./cmd/{{.MainName}} && echo "🆗 built {{.MainName}} for FreeBSD-amd64 successfully."
 
 # deploy.
 [group('deployment')]
@@ -36,6 +35,7 @@ deploy: build
   @ssh -i ${DEPLOY_KEY} ${DEPLOY_USER}@${DEPLOY_HOST} service {{.DaemonName}} stop
   @scp -i ${DEPLOY_KEY} ./build/{{.DaemonName}} ${DEPLOY_USER}@${DEPLOY_HOST}:/usr/local/bin/{{.DaemonName}}
   @ssh -i ${DEPLOY_KEY} ${DEPLOY_USER}@${DEPLOY_HOST} service {{.DaemonName}} start
+  @echo "✅ {{.DaemonName}} was successfully deployed."
 
 # ssh into deploy server.
 [group('deployment')]
