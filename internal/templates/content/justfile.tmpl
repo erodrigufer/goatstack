@@ -53,10 +53,17 @@ backup:
   @scp -i ${DEPLOY_KEY} ${DEPLOY_USER}@${DEPLOY_HOST}:/usr/local/share/{{.DaemonName}}.d/{{.DaemonName}}.sqlite3 ./backups
   @mv ./backups/{{.DaemonName}}.sqlite3 ./backups/{{.DaemonName}}-$(date -I).sqlite3
 
+{{if (eq .DB "sqlite")}}
 # open sqlite cli.
 [group('sql')]
 sql:
   cd db && sqlite3 database.sqlite3
+{{else  if (eq .DB "postgres")}}
+# open postgres client pgcli.
+[group('sql')]
+sql:
+  pgcli -u ${DB_USER} -d ${DB_NAME}
+{{end}}
 
 # run database migrations.
 # [group('sql')]
