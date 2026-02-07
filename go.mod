@@ -4,6 +4,8 @@ go 1.24.4
 
 tool github.com/rakyll/gotest
 
+require github.com/urfave/cli/v3 v3.6.2
+
 require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect

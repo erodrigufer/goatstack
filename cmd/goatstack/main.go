@@ -1,10 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	"github.com/erodrigufer/goatstack/internal/templates"
+	"github.com/erodrigufer/goatstack/internal/cli"
 )
 
 func main() {
@@ -15,15 +16,10 @@ func main() {
 }
 
 func run() error {
-	data := templates.TemplateData{
-		ModuleName: "erodriguez.de/app",
-		MainName:   "webserver",
-		DaemonName: "webserverd",
-	}
+	cliApp := cli.CreateCLI()
 
-	err := templates.Populate(data)
-	if err != nil {
-		return fmt.Errorf("unable to populate project: %w", err)
+	if err := cliApp.Run(context.Background(), os.Args); err != nil {
+		return fmt.Errorf("unable to run cmd: %w", err)
 	}
 	return nil
 }
