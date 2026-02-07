@@ -15,7 +15,7 @@ clean:
 # go vet.
 [group('go')]
 vet:
-  go vet ./...
+  @go vet ./... && echo "🆗 vet was successful for {{ APP_NAME }}."
 
 # go test.
 [group('go')]
