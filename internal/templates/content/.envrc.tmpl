@@ -1,0 +1,7 @@
+export PORT=":8080"
+export ENVIRONMENT="dev"
+{{if (eq .DB "sqlite")}}
+export SQLITE_PATH="./db/database.sqlite3"
+{{else  if (eq .DB "postgres")}}
+export DB_CONN_STRING="postgres://postgres@localhost:5432/{{.MainName}}?sslmode=disable"
+{{end}}
