@@ -36,7 +36,7 @@ func getTemplateFSFilesFullPath() ([]string, error) {
 	return files, nil
 }
 
-func GetTemplateFSFilesBasePath() ([]string, error) {
+func getTemplateFSFilesBasePath() ([]string, error) {
 	files, err := getTemplateFSFilesFullPath()
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func checkNoDuplicateTemplateNames(files []string) error {
 }
 
 func Populate(data TemplateData) error {
-	templatesBaseNames, err := GetTemplateFSFilesBasePath()
+	templatesBaseNames, err := getTemplateFSFilesBasePath()
 	if err != nil {
 		return fmt.Errorf("unable to get templates base names: %w", err)
 	}

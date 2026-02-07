@@ -5,7 +5,7 @@ import (
 )
 
 func Test_parseTemplates(t *testing.T) {
-	files, err := GetTemplateFSFilesBasePath()
+	files, err := getTemplateFSFilesBasePath()
 	if err != nil {
 		t.Fatalf("unable to retrieve files from templateFS: %s", err.Error())
 	}
