@@ -13,7 +13,11 @@ func walkTemplateFS(walkDirFunc fs.WalkDirFunc) error {
 	if err != nil {
 		return fmt.Errorf("unable to create subtree FS: %w", err)
 	}
-	return fs.WalkDir(subTemplateFS, ".", walkDirFunc)
+	err = fs.WalkDir(subTemplateFS, ".", walkDirFunc)
+	if err != nil {
+		return fmt.Errorf("unable to walk directory: %w", err)
+	}
+	return nil
 }
 
 // getTemplateFSFilesFullPath returns a slice with the full path of all
@@ -31,7 +35,7 @@ func getTemplateFSFilesFullPath() ([]string, error) {
 	}
 	err := walkTemplateFS(walkDirFunc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("an error happened while walking through template FS: %w", err)
 	}
 	return files, nil
 }
@@ -39,7 +43,7 @@ func getTemplateFSFilesFullPath() ([]string, error) {
 func getTemplateFSFilesBasePath() ([]string, error) {
 	files, err := getTemplateFSFilesFullPath()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("an error happened getting the filepaths of template FS: %w", err)
 	}
 	for i, path := range files {
 		files[i] = filepath.Base(path)

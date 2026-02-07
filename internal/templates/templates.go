@@ -31,5 +31,9 @@ func executeTemplate(wr io.Writer, templateName string, data TemplateData) error
 	if err != nil {
 		return fmt.Errorf("unable to parse templates: %w", err)
 	}
-	return templates.ExecuteTemplate(wr, templateName, data)
+	err = templates.ExecuteTemplate(wr, templateName, data)
+	if err != nil {
+		return fmt.Errorf("an error happened executing the templates: %w", err)
+	}
+	return nil
 }
