@@ -80,7 +80,7 @@ func Populate(data TemplateData) error {
 		case true:
 			root.Mkdir(path, 0o755)
 		case false:
-			pathWithoutSuffix, err := removeFileSuffix(path, ".tmpl")
+			pathWithoutSuffix, err := removeFilenameSuffix(path, ".tmpl")
 			if err != nil {
 				return fmt.Errorf("unable to remove file suffix: %w", err)
 			}
@@ -105,7 +105,8 @@ func Populate(data TemplateData) error {
 	return nil
 }
 
-func removeFileSuffix(path, suffix string) (string, error) {
+// removeFilenameSuffix removes a suffix (e.g. `templ`) from a filename.
+func removeFilenameSuffix(path, suffix string) (string, error) {
 	withoutSuffix, ok := strings.CutSuffix(path, suffix)
 	if !ok {
 		return "", fmt.Errorf("could not find suffix %s in path %s", suffix, path)
