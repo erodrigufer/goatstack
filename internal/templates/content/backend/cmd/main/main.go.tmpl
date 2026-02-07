@@ -14,7 +14,12 @@ func main() {
 	ctx := context.Background()
 
 	requiredEnvVariables := []string{
-		"PORT", "ENVIRONMENT", "SQLITE_PATH",
+		"PORT", "ENVIRONMENT", 
+{{if (eq .DB "sqlite")}}
+    "SQLITE_PATH",
+{{else  if (eq .DB "postgres")}}
+    "DB_CONN_STRING",
+{{end}}
 	}
 	if err := run(ctx, requiredEnvVariables); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)

@@ -1,13 +1,27 @@
 package state
 
-import "database/sql"
+import(
+{{if (eq .DB "sqlite")}}
+  "database/sql"
+{{else  if (eq .DB "postgres")}}
+	"github.com/jackc/pgx/v5/pgxpool"
+{{end}}
+)
 
 type StateManager struct {
-	*sql.DB
+{{if (eq .DB "sqlite")}}
+	db *sql.DB
+{{else  if (eq .DB "postgres")}}
+  db *pgxpool.Pool
+{{end}}
 }
 
+{{if (eq .DB "sqlite")}}
 func NewStateManager(db *sql.DB) *StateManager {
+{{else  if (eq .DB "postgres")}}
+func NewStateManager(db *pgxpool.Pool) *StateManager {
+{{end}}
 	sm := new(StateManager)
-	sm.DB = db
+	sm.db = db
 	return sm
 }

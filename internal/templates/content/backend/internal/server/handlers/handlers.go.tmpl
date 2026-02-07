@@ -1,7 +1,11 @@
 package handlers
 
 import (
+{{if (eq .DB "sqlite")}}
 	"database/sql"
+{{else  if (eq .DB "postgres")}}
+	"github.com/jackc/pgx/v5/pgxpool"
+{{end}}
 	"log/slog"
 
 	"{{.ModuleName}}/internal/state"
@@ -14,7 +18,11 @@ type Handlers struct {
 }
 
 // NewHandlers creates a struct that contains all handlers of the application.
+{{if (eq .DB "sqlite")}}
 func NewHandlers(infoLog, errorLog *slog.Logger, db *sql.DB) *Handlers {
+{{else  if (eq .DB "postgres")}}
+func NewHandlers(infoLog, errorLog *slog.Logger, db *pgxpool.Pool) *Handlers {
+{{end}}
 	handlers := new(Handlers)
 	handlers.infoLog = infoLog
 	handlers.errorLog = errorLog

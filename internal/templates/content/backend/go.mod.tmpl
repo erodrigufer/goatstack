@@ -11,7 +11,11 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/unrolled/secure v1.17.0
 	github.com/urfave/negroni v1.0.0
+{{if (eq .DB "sqlite")}}
 	modernc.org/sqlite v1.38.0
+{{else  if (eq .DB "postgres")}}
+	github.com/jackc/pgx/v5 v5.7.5
+{{end}}
 )
 
 require (

@@ -38,6 +38,10 @@ func configCreateFlags() []cli.Flag {
 			Usage:    "Daemon name to be used on deployment",
 			Required: true,
 		},
+		&cli.StringFlag{
+			Name:  "db",
+			Usage: "DB type used on app, e.g. 'sqlite', 'postgres'",
+		},
 	}
 }
 
@@ -47,6 +51,7 @@ func configCreateAction() cli.ActionFunc {
 			ModuleName: cmd.String("module"),
 			MainName:   cmd.String("app"),
 			DaemonName: cmd.String("daemon"),
+			DB:         cmd.String("db"),
 		}
 
 		err := templates.Populate(data)

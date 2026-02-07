@@ -14,7 +14,7 @@ type TemplateData struct {
 	ModuleName string
 	MainName   string
 	DaemonName string
-	UseDB      bool
+	DB         string
 }
 
 func parseTemplates() (*template.Template, error) {
