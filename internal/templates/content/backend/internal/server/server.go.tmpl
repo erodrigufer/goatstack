@@ -13,6 +13,7 @@ import (
   "sync"
   "time"
 
+	"github.com/alexedwards/scs/v2"
   "github.com/lmittmann/tint"
   "github.com/spf13/viper"
 {{if (eq .DB "sqlite")}}
@@ -30,6 +31,7 @@ type Application struct {
   InfoLog *slog.Logger
   // config centrally manages env. variables.
   config *viper.Viper
+	sessionManager *scs.SessionManager
   // db connection.
 {{if (eq .DB "sqlite")}}
   db *sql.DB
@@ -57,7 +59,12 @@ func NewApplication(ctx context.Context, requiredEnvVariables []string) (*Applic
 		return nil, fmt.Errorf("failed to start a db connection: %w", err)
 	}
 
-	err = app.setupServerParameters()
+	app.sessionManager = scs.New()
+	app.sessionManager.Lifetime = 15 * 24 * time.Hour
+	app.sessionManager.IdleTimeout = 15 * 24 * time.Hour
+	app.sessionManager.Cookie.SameSite = http.SameSiteStrictMode // prevent CSRF attacks.
+
+	err = app.setupServerParameters(app.sessionManager)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup the server's parameters: %w", err)
 	}
@@ -99,6 +106,8 @@ func (app *Application) startDBConnection(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("database is unreachable: %w", err)
 	}
+
+	app.InfoLog.Info("Successfully pinged postgres db")
   return nil
 }
 {{end}}
@@ -177,7 +186,7 @@ func (app *Application) setupLoggers() error {
 	return nil
 }
 
-func (app *Application) setupServerParameters() error {
+func (app *Application) setupServerParameters(sessionManager *scs.SessionManager) error {
 	// http.Server can only handle loggers from the old log package.
 	compatibleLogger := slog.NewLogLogger(slog.NewJSONHandler(os.Stderr, nil), slog.LevelError)
 
@@ -186,7 +195,7 @@ func (app *Application) setupServerParameters() error {
 		return fmt.Errorf("unable to get config value: %w", err)
 	}
 
-	endpoints, err := app.defineEndpoints()
+	endpoints, err := app.defineEndpoints(sessionManager)
 	if err != nil {
 		return fmt.Errorf("unable to define endpoints: %w", err)
 	}

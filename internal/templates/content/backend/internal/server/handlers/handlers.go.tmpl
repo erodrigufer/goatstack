@@ -9,6 +9,7 @@ import (
 {{end}}
 	"log/slog"
 
+	"github.com/alexedwards/scs/v2"
 	"{{.ModuleName}}/internal/state"
 )
 
@@ -16,18 +17,20 @@ type Handlers struct {
 	infoLog  *slog.Logger
 	errorLog *slog.Logger
 	sm       state.StateManager
+	sessionManager *scs.SessionManager
 }
 
 // NewHandlers creates a struct that contains all handlers of the application.
 {{if (eq .DB "sqlite")}}
-func NewHandlers(infoLog, errorLog *slog.Logger, db *sql.DB) *Handlers {
+func NewHandlers(infoLog, errorLog *slog.Logger, db *sql.DB, sessions *scs.SessionManager) *Handlers {
 {{else  if (eq .DB "postgres")}}
-func NewHandlers(infoLog, errorLog *slog.Logger, db *pgxpool.Pool) *Handlers {
+func NewHandlers(infoLog, errorLog *slog.Logger, db *pgxpool.Pool, sessions *scs.SessionManager) *Handlers {
 {{end}}
 	handlers := new(Handlers)
 	handlers.infoLog = infoLog
 	handlers.errorLog = errorLog
 	handlers.sm = *state.NewStateManager(db)
+  handlers.sessionManager = sessions
 
 	return handlers
 }

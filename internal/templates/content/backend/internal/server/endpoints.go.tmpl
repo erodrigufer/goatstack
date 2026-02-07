@@ -1,29 +1,45 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
+
+	"github.com/alexedwards/scs/v2"
 
 	"{{.ModuleName}}/internal/server/handlers"
 	"{{.ModuleName}}/internal/server/middlewares"
 	"{{.ModuleName}}/internal/static"
 )
 
-func (app *Application) defineEndpoints() (http.Handler, error) {
+func (app *Application) defineEndpoints(sessionManager *scs.SessionManager) (http.Handler, error) {
 	mux := http.NewServeMux()
 
-	m := middlewares.NewMiddlewares(app.InfoLog, app.ErrorLog)
+	disableAuth, err := app.GetConfigValueBool("DISABLE_AUTH")
+	if err != nil {
+		disableAuth = false
+	}
+	app.InfoLog.Info("configuring authentication", slog.Bool("DISABLE_AUTH", disableAuth))
+	m := middlewares.NewMiddlewares(app.InfoLog, app.ErrorLog, sessionManager, disableAuth)
 
-	h := handlers.NewHandlers(app.InfoLog, app.ErrorLog, app.db)
+	h := handlers.NewHandlers(app.InfoLog, app.ErrorLog, app.db, sessionManager)
 
 	fileServer := http.FileServer(http.FS(static.STATIC_CONTENT))
 
-	middlewareChain := func(next http.Handler) http.Handler {
-		return m.RecoverPanic(m.SecureHeaders(m.LogRequest(next)))
-	}
+	csrfProtection := http.NewCrossOriginProtection()
 
+	middlewareChain := func(next http.Handler) http.Handler {
+		return m.RecoverPanic(m.SecureHeaders(m.LogRequest(csrfProtection.Handler(sessionManager.LoadAndSave(next)))))
+	}
+	
+  // TODO: Create /login view.
+	mux.Handle("GET /login", h.GetHome())
 	mux.Handle("GET /content/", fileServer)
 	mux.Handle("GET /api/v1/health", h.GetHealth())
-	mux.Handle("GET /", h.GetHome())
+
+	protectedMux := http.NewServeMux()
+	mux.Handle("/", m.Authenticate(protectedMux))
+
+	protectedMux.Handle("GET /", h.GetHome())
 
 	return middlewareChain(mux), nil
 }
