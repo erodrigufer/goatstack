@@ -10,9 +10,14 @@ default:
 vet: templ
   @cd backend && go vet ./... && echo "🆗 go vet was successfully executed."
 
+# go mod tidy.
+[group('go')]
+tidy:
+  @cd backend && go mod tidy && echo "🆗 go mod tidy was successfully executed."
+
 # Start the dev server with air.
 [group('go')]
-dev:
+dev: tidy
   cd backend && air
 
 # generate templ files.
@@ -26,7 +31,7 @@ clean:
 
 # build for deployment.
 [group('deployment')]
-build: clean vet templ
+build: clean vet templ tidy
   @cd backend && env GOOS=freebsd GOARCH=amd64 go build -o ../build/{{.MainName}} ./cmd/{{.MainName}} && echo "🆗 built {{.MainName}} for FreeBSD-amd64 successfully."
 
 # deploy.
