@@ -91,7 +91,7 @@ func Populate(data TemplateData) error {
 				return fmt.Errorf("unable to create file: %w", err)
 			}
 			defer file.Close()
-			err = ExecuteTemplate(file, filepath.Base(path), data)
+			err = executeTemplate(file, filepath.Base(path), data)
 			if err != nil {
 				return fmt.Errorf("unable to execute template for file %s: %w", path, err)
 			}

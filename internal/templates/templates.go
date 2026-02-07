@@ -26,7 +26,7 @@ func parseTemplates() (*template.Template, error) {
 	return templates, nil
 }
 
-func ExecuteTemplate(wr io.Writer, templateName string, data TemplateData) error {
+func executeTemplate(wr io.Writer, templateName string, data TemplateData) error {
 	templates, err := parseTemplates()
 	if err != nil {
 		return fmt.Errorf("unable to parse templates: %w", err)
