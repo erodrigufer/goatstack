@@ -102,8 +102,9 @@ func Populate(data TemplateData) error {
 
 	err = walkTemplateFS(walkDirFunc)
 	if err != nil {
-		return err
+		return fmt.Errorf("an error happened while walking through template FS: %w", err)
 	}
+
 	return nil
 }
 
