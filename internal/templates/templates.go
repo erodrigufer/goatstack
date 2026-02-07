@@ -2,6 +2,7 @@ package templates
 
 import (
 	"embed"
+	"fmt"
 	"io"
 	"text/template"
 )
@@ -19,7 +20,7 @@ type TemplateData struct {
 func parseTemplates() (*template.Template, error) {
 	templates, err := template.ParseFS(templatesFS, "content/*.tmpl", "content/backend/*.tmpl", "content/backend/*/*/*.tmpl", "content/backend/*/*/*/*.tmpl")
 	if err != nil {
-		return &template.Template{}, err
+		return &template.Template{}, fmt.Errorf("unable to parse filesystem: %w", err)
 	}
 	return templates, nil
 }
@@ -27,7 +28,7 @@ func parseTemplates() (*template.Template, error) {
 func ExecuteTemplate(wr io.Writer, templateName string, data TemplateData) error {
 	templates, err := parseTemplates()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to parse templates: %w", err)
 	}
 	return templates.ExecuteTemplate(wr, templateName, data)
 }
