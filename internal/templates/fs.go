@@ -16,6 +16,8 @@ func walkTemplateFS(walkDirFunc fs.WalkDirFunc) error {
 	return fs.WalkDir(subTemplateFS, ".", walkDirFunc)
 }
 
+// getTemplateFSFilesFullPath returns a slice with the full path of all
+// non-directory files on the templates FS.
 func getTemplateFSFilesFullPath() ([]string, error) {
 	files := make([]string, 0)
 	walkDirFunc := func(path string, d fs.DirEntry, err error) error {
