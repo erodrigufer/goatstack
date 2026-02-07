@@ -10,7 +10,7 @@ default:
 # Remove build and tmp folders.
 [group('build')]
 clean:
-  rm -rf ./build ./tmp
+  @rm -rf ./build ./tmp && echo "🆗 clean was successfully executed."
 
 # go vet.
 [group('go')]
