@@ -84,11 +84,19 @@ func Populate(data TemplateData) error {
 		}
 		switch isDir := d.IsDir(); isDir {
 		case true:
+			// Rename `main` directory within `cmd` to app name.
+			if lastDirectoryNameMatches(path, "main", true) {
+				path = renameLastDirectory(path, data.MainName, true)
+			}
 			root.Mkdir(path, 0o755)
 		case false:
 			pathWithoutSuffix, err := removeFilenameSuffix(path, ".tmpl")
 			if err != nil {
 				return fmt.Errorf("unable to remove file suffix: %w", err)
+			}
+			// Rename `main` directory within `cmd` to app name.
+			if lastDirectoryNameMatches(pathWithoutSuffix, "main", false) {
+				pathWithoutSuffix = renameLastDirectory(pathWithoutSuffix, data.MainName, false)
 			}
 			file, err := root.Create(pathWithoutSuffix)
 			if err != nil {
@@ -119,4 +127,26 @@ func removeFilenameSuffix(path, suffix string) (string, error) {
 		return "", fmt.Errorf("could not find suffix %s in path %s", suffix, path)
 	}
 	return withoutSuffix, nil
+}
+
+// renameLastDirectory returns a path with its last directory renamed to a
+// new name, isDir is true if path points to a directory.
+func renameLastDirectory(path, newName string, isDir bool) string {
+	if isDir {
+		withoutLastDir := filepath.Dir(path)
+		return withoutLastDir + "/" + newName
+	}
+
+	withoutLastDir := filepath.Dir(filepath.Dir(path))
+	return withoutLastDir + "/" + newName + "/" + filepath.Base(path)
+}
+
+// lastDirectoryNameMatches check if the name of the last directory in the path matches
+// the given pattern, isDir is true if path points to a directory.
+func lastDirectoryNameMatches(path, pattern string, isDir bool) bool {
+	if isDir {
+		return filepath.Base(path) == pattern
+	}
+
+	return filepath.Base(filepath.Dir(path)) == pattern
 }
