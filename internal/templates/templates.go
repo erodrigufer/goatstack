@@ -1,3 +1,4 @@
+// Package templates handles all the template files that generate an app.
 package templates
 
 import (
