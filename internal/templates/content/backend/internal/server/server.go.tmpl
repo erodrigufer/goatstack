@@ -57,7 +57,7 @@ func NewApplication(ctx context.Context, requiredEnvVariables []string) (*Applic
 func (app *Application) startDBConnection(ctx context.Context) error {
 	sqliteDBPath, err := app.GetConfigValueString("SQLITE_PATH")
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get SQLITE_PATH env. variable: %w")
 	}
 	app.db, err = sql.Open("sqlite", sqliteDBPath)
 	if err != nil {
