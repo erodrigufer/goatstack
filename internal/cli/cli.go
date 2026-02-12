@@ -58,8 +58,10 @@ func configCreateFlags() []cli.Flag {
 			},
 		},
 		&cli.StringFlag{
-			Name:  "db",
-			Usage: "DB type used on app, e.g. 'sqlite', 'postgres'",
+			Name:        "db",
+			Usage:       "DB type used on app, e.g. 'sqlite', 'postgres'",
+			Value:       "postgres",
+			DefaultText: "postgres",
 		},
 	}
 }
