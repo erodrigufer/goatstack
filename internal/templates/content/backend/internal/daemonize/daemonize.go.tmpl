@@ -1,0 +1,39 @@
+// Package daemonize provides a simple way to run background tasks.
+package daemonize
+
+import (
+	"fmt"
+	"log/slog"
+	"time"
+)
+
+// Daemonize securely runs a function in the background.
+func Daemonize(fn func(), name string, errorLogger *slog.Logger) {
+	go func() {
+		defer func() {
+			pv := recover()
+			if pv != nil {
+				pvString := fmt.Sprintf("%v", pv)
+				errorLogger.Error("daemon panicked, but was recovered", slog.String("daemon", name), slog.String("panic_value", pvString))
+			}
+		}()
+
+		fn()
+	}()
+}
+
+func CalculateDurationTillNextRun(scheduledTime time.Time) time.Duration {
+	now := time.Now()
+	scheduledTimeToday := time.Date(
+		now.Year(), now.Month(), now.Day(),
+		scheduledTime.Hour(), scheduledTime.Minute(), 0, 0,
+		now.Location(),
+	)
+
+	nextScheduledTime := scheduledTimeToday
+	if scheduledTimeToday.Before(now) {
+		nextScheduledTime = scheduledTimeToday.AddDate(0, 0, 1)
+	}
+
+	return nextScheduledTime.Sub(now)
+}
