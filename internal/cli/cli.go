@@ -4,6 +4,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/erodrigufer/goatstack/internal/templates"
 	"github.com/urfave/cli/v3"
@@ -25,18 +26,36 @@ func configCreateFlags() []cli.Flag {
 			Aliases:  []string{"a"},
 			Usage:    "Main app name",
 			Required: true,
+			Action: func(ctx context.Context, cmd *cli.Command, s string) error {
+				if strings.Contains(s, " ") {
+					return fmt.Errorf("flag app value `%s` should not contain whitespaces", s)
+				}
+				return nil
+			},
 		},
 		&cli.StringFlag{
 			Name:     "module",
 			Aliases:  []string{"m"},
 			Usage:    "Module name on go.mod file",
 			Required: true,
+			Action: func(ctx context.Context, cmd *cli.Command, s string) error {
+				if strings.Contains(s, " ") {
+					return fmt.Errorf("flag module value `%s` should not contain whitespaces", s)
+				}
+				return nil
+			},
 		},
 		&cli.StringFlag{
 			Name:     "daemon",
 			Aliases:  []string{"d"},
 			Usage:    "Daemon name to be used on deployment",
 			Required: true,
+			Action: func(ctx context.Context, cmd *cli.Command, s string) error {
+				if strings.Contains(s, " ") {
+					return fmt.Errorf("flag daemon value `%s` should not contain whitespaces", s)
+				}
+				return nil
+			},
 		},
 		&cli.StringFlag{
 			Name:  "db",
