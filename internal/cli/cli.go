@@ -27,10 +27,7 @@ func configCreateFlags() []cli.Flag {
 			Usage:    "Main app name",
 			Required: true,
 			Action: func(ctx context.Context, cmd *cli.Command, s string) error {
-				if strings.Contains(s, " ") {
-					return fmt.Errorf("flag app value `%s` should not contain whitespaces", s)
-				}
-				return nil
+				return checkFlagValue("app", s)
 			},
 		},
 		&cli.StringFlag{
@@ -39,10 +36,7 @@ func configCreateFlags() []cli.Flag {
 			Usage:    "Module name on go.mod file",
 			Required: true,
 			Action: func(ctx context.Context, cmd *cli.Command, s string) error {
-				if strings.Contains(s, " ") {
-					return fmt.Errorf("flag module value `%s` should not contain whitespaces", s)
-				}
-				return nil
+				return checkFlagValue("module", s)
 			},
 		},
 		&cli.StringFlag{
@@ -51,10 +45,7 @@ func configCreateFlags() []cli.Flag {
 			Usage:    "Daemon name to be used on deployment",
 			Required: true,
 			Action: func(ctx context.Context, cmd *cli.Command, s string) error {
-				if strings.Contains(s, " ") {
-					return fmt.Errorf("flag daemon value `%s` should not contain whitespaces", s)
-				}
-				return nil
+				return checkFlagValue("daemon", s)
 			},
 		},
 		&cli.StringFlag{
@@ -84,4 +75,14 @@ func configCreateAction() cli.ActionFunc {
 		fmt.Printf("✅ %s has been created.\n → Run `just dev` to start developing.\n\n", data.MainName)
 		return nil
 	}
+}
+
+func checkFlagValue(flagName, flagValue string) error {
+	if strings.Contains(flagValue, " ") {
+		return fmt.Errorf("flag `%s` value `%s` should not contain whitespaces", flagName, flagValue)
+	}
+	if strings.ToLower(flagValue) != flagValue {
+		return fmt.Errorf("flag `%s` value `%s` should not contain uppercase letters", flagName, flagValue)
+	}
+	return nil
 }
