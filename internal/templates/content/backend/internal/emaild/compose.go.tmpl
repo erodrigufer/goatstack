@@ -1,0 +1,8 @@
+package mailer
+
+func Compose(subject, body string) Email {
+	return Email{
+		Subject: subject,
+		Body:    body,
+	}
+}

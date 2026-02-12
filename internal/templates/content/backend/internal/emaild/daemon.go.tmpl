@@ -1,0 +1,35 @@
+package mailer
+
+import (
+	"context"
+	"log/slog"
+
+	"{{.ModuleName}}/internal/daemonize"
+)
+
+const daemonName = "mailer"
+
+func (m *mailer) startMailerDaemon(ctx context.Context) {
+	mailerFunc := func() {
+		defer func() {
+			m.infoLog.Info(daemonize.StopDaemonMsg)
+			m.close()
+		}()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case email := <-m.emailsCh:
+				m.infoLog.Info("received an email to send on emailsCh", slog.String("recipient", m.recipient), slog.String("subject", email.Subject))
+				err := m.send(ctx, m.recipient, email)
+				if err != nil {
+					m.errorLog.Error("failed to send email", slog.String("error_message", err.Error()))
+					continue
+				}
+				m.infoLog.Info("email succesfully sent", slog.String("recipient", m.recipient), slog.String("subject", email.Subject))
+			}
+		}
+	}
+
+	daemonize.Daemonize(mailerFunc, daemonName, m.errorLog)
+}

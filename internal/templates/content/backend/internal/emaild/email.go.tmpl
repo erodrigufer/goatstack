@@ -1,0 +1,104 @@
+// Package mailer provides utilities for sending emails.
+package mailer
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"time"
+
+	"github.com/wneessen/go-mail"
+)
+
+// totalRetries is the number of times the daemon will try to send
+// an email before giving up.
+const totalRetries = 4
+
+type Email struct {
+	Subject string
+	Body    string
+}
+
+type mailer struct {
+	client *mail.Client
+	// sender is the email address that will be used as the sender,
+	// e.g. as "Jaume Romeu <jaume@romeu.cat>"
+	sender string
+	// recipient is the email address that will receive the emails,
+	// e.g. as "oriol@romeu.cat"
+	recipient string
+	infoLog   *slog.Logger
+	errorLog  *slog.Logger
+	emailsCh  <-chan Email
+}
+
+// Start initializes a new Mailer and starts a daemon that will send all emails it receives on the returned channel.
+func Start(ctx context.Context, host string, port int, username, password, sender, recipient string, infoLog, errorLog *slog.Logger) (chan<- Email, error) {
+	client, err := mail.NewClient(
+		host,
+		mail.WithSMTPAuth(mail.SMTPAuthLogin),
+		mail.WithPort(port),
+		mail.WithUsername(username),
+		mail.WithPassword(password),
+		// Timeout is used in DialAndSendWithContext.
+		mail.WithTimeout(7*time.Second),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create mail client: %w", err)
+	}
+
+	infoLog = infoLog.With("daemon", daemonName)
+	errorLog = errorLog.With("daemon", daemonName)
+
+	emailsCh := make(chan Email)
+
+	mailer := &mailer{
+		client:    client,
+		sender:    sender,
+		recipient: recipient,
+		infoLog:   infoLog,
+		errorLog:  errorLog,
+		emailsCh:  emailsCh,
+	}
+
+	mailer.startMailerDaemon(ctx)
+
+	return emailsCh, nil
+}
+
+func (m *mailer) send(ctx context.Context, recipient string, email Email) error {
+	message := mail.NewMsg()
+	err := message.To(recipient)
+	if err != nil {
+		return fmt.Errorf("failed to set recipient: %w", err)
+	}
+	err = message.From(m.sender)
+	if err != nil {
+		return fmt.Errorf("failed to set sender: %w", err)
+	}
+
+	message.Subject(email.Subject)
+
+	message.SetBodyString(mail.TypeTextPlain, email.Body)
+
+	waitRetry := 2 * time.Minute
+
+	m.infoLog.Info("sending email", slog.String("recipient", recipient), slog.String("subject", email.Subject))
+	for i := range totalRetries {
+		err = m.client.DialAndSendWithContext(ctx, message)
+		if err == nil {
+			return nil
+		}
+		if i != totalRetries-1 {
+			m.errorLog.Error("failed to send email", slog.String("recipient", recipient), slog.String("subject", email.Subject),
+				slog.String("error", err.Error()), slog.Duration("wait_retry", waitRetry), slog.Int("total_retries", totalRetries))
+			time.Sleep(waitRetry)
+		}
+	}
+
+	return fmt.Errorf("failed to send email after %d retries: %w", totalRetries, err)
+}
+
+func (m *mailer) close() error {
+	return m.client.Close()
+}
