@@ -75,10 +75,13 @@ func configCreateAction() cli.ActionFunc {
 			DB:         cmd.String("db"),
 		}
 
+		fmt.Printf("Creating...\n\n •Application name: %s\n •Module name: %s\n •Daemon name: %s\n •DB Engine: %s\n\n", data.MainName, data.ModuleName, data.DaemonName, data.DB)
+
 		err := templates.Populate(data)
 		if err != nil {
 			return fmt.Errorf("unable to populate project: %w", err)
 		}
+		fmt.Printf("✅ %s has been created.\n → Run `just dev` to start developing.\n\n", data.MainName)
 		return nil
 	}
 }
