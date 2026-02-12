@@ -19,7 +19,7 @@ type TemplateData struct {
 }
 
 func parseTemplates() (*template.Template, error) {
-	templates, err := template.ParseFS(templatesFS, "content/*.tmpl", "content/backend/*.tmpl", "content/backend/*/*/*.tmpl", "content/backend/*/*/*/*.tmpl")
+	templates, err := template.ParseFS(templatesFS, "content/*.tmpl", "content/freebsd/*.tmpl", "content/backend/*.tmpl", "content/backend/*/*/*.tmpl", "content/backend/*/*/*/*.tmpl")
 	if err != nil {
 		return &template.Template{}, fmt.Errorf("unable to parse filesystem: %w", err)
 	}

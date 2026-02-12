@@ -98,6 +98,11 @@ func Populate(data TemplateData) error {
 			if lastDirectoryNameMatches(pathWithoutSuffix, "main", false) {
 				pathWithoutSuffix = renameLastDirectory(pathWithoutSuffix, data.MainName, false)
 			}
+			// rc script should be named after app.
+			if filepath.Base(pathWithoutSuffix) == "rc_script" {
+				pathWithoutSuffix = filepath.Dir(pathWithoutSuffix) + "/" + data.MainName
+			}
+
 			file, err := root.Create(pathWithoutSuffix)
 			if err != nil {
 				return fmt.Errorf("unable to create file: %w", err)

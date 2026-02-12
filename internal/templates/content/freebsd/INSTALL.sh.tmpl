@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Create {{.MainName}} group and system user.
+pw groupadd {{.MainName}}
+# -g group 
+# -d homedir
+# -s shell
+# -c comment
+pw useradd {{.MainName}} -g {{.MainName}} -d /nonexistent -s /usr/sbin/nologin -c "{{.MainName}} service system user"

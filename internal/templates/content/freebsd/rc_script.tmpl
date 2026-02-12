@@ -1,0 +1,33 @@
+#!/bin/sh 
+
+# PROVIDE: {{.MainName}}
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf to enable {{.MainName}}:
+#
+# {{.MainName}}_enable="YES"
+#
+#
+
+. /etc/rc.subr 
+name="{{.MainName}}" 
+rcvar=${name}_enable
+
+pidfile="/var/run/${name}.pid"
+{{.MainName}}_env_file="/usr/local/share/env/.${name}.env"
+{{.MainName}}_command="/usr/local/bin/${name}"
+
+{{if (eq .DB "sqlite")}}
+required_files="/usr/local/share/${name}.d/${name}.sqlite3 /usr/local/bin/${name} ${{"{"}}{{.MainName}}_env_file}" 
+{{else  if (eq .DB "postgres")}}
+required_files="/usr/local/bin/${name} ${{"{"}}{{.MainName}}_env_file}" 
+{{end}}
+
+sig_stop="TERM"
+
+command="/usr/sbin/daemon"
+command_args="--close-fds --restart --user ${name} --sighup --supervisor-pidfile ${pidfile} --output-file /var/log/${name} ${{"{"}}{{.MainName}}_command}"
+
+load_rc_config ${name}
+run_rc_command "$1"
