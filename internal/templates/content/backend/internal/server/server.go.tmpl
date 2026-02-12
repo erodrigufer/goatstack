@@ -8,6 +8,7 @@ import (
 {{end}}
   "fmt"
   "log/slog"
+  "net"
   "net/http"
   "os"
   "sync"
@@ -22,6 +23,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 {{end}}
 )
+
+const unixSocketPath = "/var/run/{{.MainName}}/{{.MainName}}.sock"
 
 type Application struct {
   srv *http.Server
@@ -38,6 +41,8 @@ type Application struct {
 {{else  if (eq .DB "postgres")}}
 	db  *pgxpool.Pool
 {{end}}
+	serverAddr     string
+	socket         net.Listener
 }
 
 func NewApplication(ctx context.Context, requiredEnvVariables []string) (*Application, error) {
@@ -49,9 +54,16 @@ func NewApplication(ctx context.Context, requiredEnvVariables []string) (*Applic
 		return nil, err
 	}
 
-	err = app.setupLoggers()
+	environment, err := app.GetConfigValueString("ENVIRONMENT")
 	if err != nil {
-		return nil, fmt.Errorf("failed to setup the loggers: %w", err)
+		return nil, fmt.Errorf("unable to get environment value: %w", err)
+	}
+
+	app.setupLoggers(environment)
+
+	err = app.configureListener(environment)
+	if err != nil {
+		return nil, fmt.Errorf("unable to configure net.Listener: %w", err)
 	}
 
 	err = app.startDBConnection(ctx)
@@ -118,10 +130,10 @@ func (app *Application) startDBConnection(ctx context.Context) error {
 // closing client connections.
 func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) {
 	go func() {
-		app.InfoLog.Info("Starting {{.MainName}} server", slog.String("server_address", app.srv.Addr))
+		app.InfoLog.Info("Starting {{.MainName}} server", slog.String("server_address", app.serverAddr))
 
 		// Run server.
-		if err := app.srv.ListenAndServe(); err != nil {
+		if err := app.srv.Serve(app.socket); err != nil {
 			// Error returned when server is closed, not actually an error, log to
 			// info log.
 			if err == http.ErrServerClosed {
@@ -135,10 +147,8 @@ func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		// When ctx passed from main function gets cancelled by a signal
+	wg.Go(func() {
+		// When ctx passed from main function gets cancelled with os.Interrupt signal
 		// (ctx.Done() returns), this goroutine performs a shutdown.
 		<-ctx.Done()
 
@@ -152,26 +162,31 @@ func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) {
 			// An error happened while gracefully shutting down, close abruptly.
 			app.srv.Close()
 		}
-	}()
+		if app.serverAddr == unixSocketPath {
+			os.Remove(unixSocketPath)
+		}
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-ctx.Done()
-		app.InfoLog.Info("closing sqlite db connection")
-		app.db.Close()
-	}()
+		app.InfoLog.Info("closing db connection")
+{{if (eq .DB "sqlite")}}
+		err := app.db.Close()
+		if err != nil {
+			app.ErrorLog.Error("error while closing db connection", slog.String("error_message", err.Error()))
+		}
+{{else  if (eq .DB "postgres")}}
+    app.db.Close()
+{{end}}
+		app.InfoLog.Info("successfully closed db connection")
+	})
 
 	// Wait on all goroutines performing asynchronous shutdowns before returning.
 	wg.Wait()
+	app.InfoLog.Info("server gracefully shut down")
 }
 
-func (app *Application) setupLoggers() error {
-	environment, err := app.GetConfigValueString("ENVIRONMENT")
-	if err != nil {
-		return fmt.Errorf("unable to get environment value: %w", err)
-	}
-
+func (app *Application) setupLoggers(environment string) {
 	if environment != "prod" {
 		app.InfoLog = slog.New(tint.NewHandler(os.Stdout, nil))
 		app.ErrorLog = slog.New(tint.NewHandler(os.Stderr, nil))
@@ -182,18 +197,11 @@ func (app *Application) setupLoggers() error {
 
 	app.InfoLog = app.InfoLog.With("environment", environment)
 	app.ErrorLog = app.ErrorLog.With("environment", environment)
-
-	return nil
 }
 
 func (app *Application) setupServerParameters(sessionManager *scs.SessionManager) error {
 	// http.Server can only handle loggers from the old log package.
 	compatibleLogger := slog.NewLogLogger(slog.NewJSONHandler(os.Stderr, nil), slog.LevelError)
-
-	portValue, err := app.GetConfigValueString("PORT")
-	if err != nil {
-		return fmt.Errorf("unable to get config value: %w", err)
-	}
 
 	endpoints, err := app.defineEndpoints(sessionManager)
 	if err != nil {
@@ -201,7 +209,6 @@ func (app *Application) setupServerParameters(sessionManager *scs.SessionManager
 	}
 
 	app.srv = &http.Server{
-		Addr:     portValue,
 		ErrorLog: compatibleLogger,
 		Handler:  endpoints,
 		// Time after which inactive keep-alive connections will be closed.
@@ -213,5 +220,44 @@ func (app *Application) setupServerParameters(sessionManager *scs.SessionManager
 		WriteTimeout: 30 * time.Second,
 	}
 
+	return nil
+}
+
+func (app *Application) configureListener(environment string) error {
+	if environment != "prod" {
+		portValue, err := app.GetConfigValueString("PORT")
+		if err != nil {
+			return fmt.Errorf("unable to get port value: %w", err)
+		}
+
+		host := ""
+		hostPort := net.JoinHostPort(host, portValue)
+
+		app.socket, err = net.Listen("tcp", hostPort)
+		if err != nil {
+			return fmt.Errorf("unable to listen for TCP connections on host:port %s: %w", hostPort, err)
+		}
+		app.serverAddr = hostPort
+
+	} else {
+		app.serverAddr = unixSocketPath
+		// Remove the socket file if it already exists to prevent
+		// "address already in use" errors.
+		err := os.RemoveAll(unixSocketPath)
+		if err != nil {
+			return fmt.Errorf("unable to remove socket at %s: %w", unixSocketPath, err)
+		}
+		// Create a Unix domain socket and listen for incoming connections.
+		app.socket, err = net.Listen("unix", unixSocketPath)
+		if err != nil {
+			return fmt.Errorf("unable to create unix socket: %w", err)
+		}
+		// Socket is only accessible to `{{.MainName}}` service user and `www` service user (for
+		// Caddy. All other users should not have access to the Unix socket.
+		err = os.Chmod(unixSocketPath, 0o770)
+		if err != nil {
+			return fmt.Errorf("unable to change file permissions of socket %s: %w", unixSocketPath, err)
+		}
+	}
 	return nil
 }
