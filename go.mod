@@ -1,6 +1,6 @@
 module github.com/erodrigufer/goatstack
 
-go 1.24.4
+go 1.26.0
 
 tool github.com/rakyll/gotest
 
