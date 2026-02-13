@@ -5,6 +5,8 @@ import (
 	"embed"
 	"fmt"
 	"io"
+	"io/fs"
+	"path/filepath"
 	"text/template"
 )
 
@@ -19,7 +21,21 @@ type TemplateData struct {
 }
 
 func parseTemplates() (*template.Template, error) {
-	templates, err := template.ParseFS(templatesFS, "content/*.tmpl", "content/freebsd/*.tmpl", "content/backend/*.tmpl", "content/backend/*/*/*.tmpl", "content/backend/*/*/*/*.tmpl")
+	var templateFiles []string
+	err := fs.WalkDir(templatesFS, "content", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && filepath.Ext(path) == ".tmpl" {
+			templateFiles = append(templateFiles, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return &template.Template{}, fmt.Errorf("unable to walk content directory: %w", err)
+	}
+
+	templates, err := template.ParseFS(templatesFS, templateFiles...)
 	if err != nil {
 		return &template.Template{}, fmt.Errorf("unable to parse filesystem: %w", err)
 	}
