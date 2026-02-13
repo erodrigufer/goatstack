@@ -1,8 +1,10 @@
-package views
+package base
 
 import (
 	"strconv"
 	"time"
+
+  "{{.ModuleName}}/internal/views/colors"
 )
 
 css footer() {
@@ -11,10 +13,10 @@ css footer() {
 }
 
 css h1() {
-	color: { h1Color };
+	color: { colors.H1Color };
 }
 
-templ base() {
+templ Base() {
 	<!DOCTYPE html>
 	<html>
 		<head>
