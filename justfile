@@ -32,3 +32,11 @@ build: vet test clean
 install : build
   @echo "Installing {{ APP_NAME }} on host..."
   @cp {{ BUILD_TARGET }} ~/bin && echo "✅ {{ APP_NAME }} was successfully installed on host."
+
+# Test the compiled binary by creating a project and running vet on it.
+[group('build')]
+binary: build
+  @mkdir -p ./tmp
+  @cd ./tmp && ../{{ BUILD_TARGET }} create --app testproject --module codeberg.org/testproject --daemon testprojectd
+  @cd ./tmp && just vet
+  @echo "✅ Binary test passed successfully."

@@ -2,8 +2,8 @@
 *.bak
 /backups
 
-# Ignore builds from air.
-**/tmp
+# Ignore binary builds tests.
+tmp
 
 # Test binary, built with `go test -c`
 *.test

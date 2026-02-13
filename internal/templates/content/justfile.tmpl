@@ -7,7 +7,7 @@ default:
 
 # go vet.
 [group('go')]
-vet: templ
+vet: templ tidy
   @cd backend && go vet ./... && echo "🆗 go vet was successfully executed."
 
 # go mod tidy.
@@ -23,6 +23,8 @@ dev: tidy
 # generate templ files.
 [group('go')]
 templ:
+  @# `go mod download` all is required to bootstrap the templ generation on the first run of the app.
+  @cd backend && go mod download all
   @cd backend && go tool templ generate -path ./internal/views && echo "🆗 successfully generated views from templ files."
 
 # remove temporary files.
