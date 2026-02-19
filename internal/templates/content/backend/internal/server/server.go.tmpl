@@ -128,8 +128,13 @@ func (app *Application) startDBConnection(ctx context.Context) error {
 // If the server receives a signal the backend knows that it should
 // start the process of gracefully shutting down, i.e. closing DB connections and
 // closing client connections.
-func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) {
-	go func() {
+func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) error {
+	serverErrCh := make(chan struct{})
+
+	var wg sync.WaitGroup
+	var serverErr error
+
+	wg.Go(func() {
 		app.InfoLog.Info("Starting {{.MainName}} server", slog.String("server_address", app.serverAddr))
 
 		// Run server.
@@ -138,19 +143,23 @@ func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) {
 			// info log.
 			if err == http.ErrServerClosed {
 				app.InfoLog.Info(err.Error())
-				// An actual error happened, log to error log.
 			} else {
+				// An actual error happened, log to error log.
 				app.ErrorLog.Error("an error happened while executing LinstenAndServe()", slog.String("error_message", err.Error()))
+				serverErr = err
 			}
 		}
-	}()
 
-	var wg sync.WaitGroup
+		// Close the channel to signal all waiting goroutines that the server has stopped.
+		close(serverErrCh)
+	})
 
 	wg.Go(func() {
-		// When ctx passed from main function gets cancelled with os.Interrupt signal
-		// (ctx.Done() returns), this goroutine performs a shutdown.
-		<-ctx.Done()
+		// Wait for either context cancellation or a server error.
+		select {
+		case <-ctx.Done():
+		case <-serverErrCh:
+		}
 
 		shutdownCtx := context.Background()
 		shutdownCtx, cancel := context.WithTimeout(shutdownCtx, 15*time.Second)
@@ -168,7 +177,11 @@ func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) {
 	})
 
 	wg.Go(func() {
-		<-ctx.Done()
+		// Wait for either context cancellation or a server error.
+		select {
+		case <-ctx.Done():
+		case <-serverErrCh:
+		}
 		app.InfoLog.Info("closing db connection")
 {{if (eq .DB "sqlite")}}
 		err := app.db.Close()
@@ -184,6 +197,12 @@ func (app *Application) StartServerWithGracefulShutdown(ctx context.Context) {
 	// Wait on all goroutines performing asynchronous shutdowns before returning.
 	wg.Wait()
 	app.InfoLog.Info("server gracefully shut down")
+
+	if serverErr != nil {
+		return fmt.Errorf("server error: %w", serverErr)
+	}
+
+	return nil
 }
 
 func (app *Application) setupLoggers(environment string) {

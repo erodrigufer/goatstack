@@ -22,7 +22,7 @@ func main() {
 {{end}}
 	}
 	if err := run(ctx, requiredEnvVariables); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 }
@@ -39,7 +39,10 @@ func run(ctx context.Context, requiredEnvVariables []string) error {
 	if err != nil {
 		return fmt.Errorf("unable to initialize a new application: %w", err)
 	}
-	app.StartServerWithGracefulShutdown(ctx)
+	err = app.StartServerWithGracefulShutdown(ctx)
+	if err != nil {
+		return fmt.Errorf("server initialization failed: %w", err)
+	}
 
 	return nil
 }
