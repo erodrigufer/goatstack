@@ -82,6 +82,36 @@ myproject/
 ├── .gitignore
 └── README.md
 ```
+
+### Backend Features
+
+- **HTTP Server** with middleware (logging, security headers, authentication, session management)
+- **Database integration** (SQLite or PostgreSQL)
+- **Goroutine management**
+- **Email daemon** for sending emails with SMTP
+- **Configuration management** via environment variables
+- **Health checks** and basic endpoints
+
+### Frontend Features
+
+- **Templ components** for HTML templating
+- **HTMX integration** for dynamic interactions withous JS
+- **CSS styling** with base styles
+
+### Development Tools
+
+- **Air** for live reloading during development
+- **Comprehensive Justfile** with targets for:
+  - `just dev` - Start development server with live reloading
+  - `just build` - Build production binary
+  - `just test` - Run tests
+  - `just deploy` - Deployment scripts
+
+### Deployment
+
+- **FreeBSD rc script** to create a system daemon
+- **Installation script**
+
 ## Development
 
 ### Available just commands
