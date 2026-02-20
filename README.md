@@ -4,6 +4,24 @@ Golang + Templ - Greatest Of All Time Stack - GOlAngTemplStack
 
 A project scaffolding tool for creating Go + Templ web applications, similar to Create React App or Vite.
 
+## Features
+
+The created Go web applications have the following features:
+
+- **Full-stack Go Web Applications**: Backend + Frontend in pure Go
+  - **Templ Integration**: Modern HTML templating with Templ
+  - **HTMX Integration**: Dynamic frontend without complex JavaScript
+- **Database Support**: Integrated SQLite or PostgreSQL
+- **Production Ready**: Includes daemonization and deployment scripts for FreeBSD
+- **Development Tools**: Live reload with Air, comprehensive Justfile
+
+## Prerequisites
+
+Before using `goatstack`, ensure you have the following dependencies installed:
+
+- **Go 1.26.0+**: Required for building the scaffolding tool and the generated projects
+- **just**: Command runner (used for build automation)
+
 ## Installation
 
 ```sh
