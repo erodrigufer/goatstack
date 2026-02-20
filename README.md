@@ -112,9 +112,9 @@ myproject/
 - **FreeBSD rc script** to create a system daemon
 - **Installation script**
 
-## Development
+## Developing goatstack
 
-### Available just commands
+Use the following just targets for working on `goatstack`:
 
 | Command        | Description                                           |
 | -------------- | ----------------------------------------------------- |
@@ -125,3 +125,15 @@ myproject/
 | `just clean`   | Remove build and tmp folders                          |
 | `just install` | Build and install to ~/bin                            |
 | `just binary`  | Test the compiled binary by creating a sample project |
+
+## Limitations
+
+- Currently focused on FreeBSD deployment (rc scripts)
+- Limited to SQLite and PostgreSQL databases
+- Basic authentication middleware included but may need customization
+
+## Future Plans (maybe?)
+
+- Linux systemd service files?
+- Docker support
+- Additional Templ components and UI kits?
