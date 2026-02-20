@@ -37,6 +37,33 @@ goatstack create --app myproject --module codeberg.org/myproject --daemon myproj
 
 After creation, run `just dev` in the generated project to start developing.
 
+## Generated Project Structure
+
+The scaffolding generates a comprehensive Go web application with the following structure:
+
+```
+myproject/
+├── backend/
+│   ├── cmd/
+│   │   └── myproject/          # Main application
+│   ├── internal/
+│   │   ├── daemonize/          # Goroutine (daemon) management
+│   │   ├── emaild/             # Email daemon
+│   │   ├── server/             # HTTP server
+│   │   ├── state/              # Database queries
+│   │   ├── static/             # Static assets (CSS, JS)
+│   │   ├── views/              # Templ components/views
+│   │   └── web/                # Web utilities
+│   ├── go.mod                  # Go module file
+│   └── .air.toml               # Live reload config
+├── freebsd/
+│   ├── INSTALL.sh              # FreeBSD installation script
+│   └── myprojectd              # FreeBSD rc script
+├── justfile
+├── .envrc                      # Environment setup
+├── .gitignore
+└── README.md
+```
 ## Development
 
 ### Available just commands
