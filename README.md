@@ -22,12 +22,12 @@ goatstack create --app <name> --module <module> --daemon <daemon> [--db <type>]
 
 ### Flags
 
-| Flag | Alias | Description | Required | Default |
-|------|-------|-------------|----------|---------|
-| `--app` | `-a` | Main application name | Yes | - |
-| `--module` | `-m` | Go module name for go.mod | Yes | - |
-| `--daemon` | `-d` | Daemon name for deployment | Yes | - |
-| `--db` | - | Database type (sqlite, postgres) | No | postgres |
+| Flag       | Alias | Description                      | Required | Default  |
+| ---------- | ----- | -------------------------------- | -------- | -------- |
+| `--app`    | `-a`  | Main application name            | Yes      | -        |
+| `--module` | `-m`  | Go module name for go.mod        | Yes      | -        |
+| `--daemon` | `-d`  | Daemon name for deployment       | Yes      | -        |
+| `--db`     | -     | Database type (sqlite, postgres) | No       | postgres |
 
 ### Example
 
@@ -41,12 +41,12 @@ After creation, run `just dev` in the generated project to start developing.
 
 ### Available just commands
 
-| Command | Description |
-|---------|-------------|
-| `just` | List available targets |
-| `just build` | Build the binary |
-| `just test` | Run tests |
-| `just vet` | Run go vet |
-| `just clean` | Remove build and tmp folders |
-| `just install` | Build and install to ~/bin |
-| `just binary` | Test the compiled binary by creating a sample project |
+| Command        | Description                                           |
+| -------------- | ----------------------------------------------------- |
+| `just`         | List available targets                                |
+| `just build`   | Build the binary                                      |
+| `just test`    | Run tests                                             |
+| `just vet`     | Run go vet                                            |
+| `just clean`   | Remove build and tmp folders                          |
+| `just install` | Build and install to ~/bin                            |
+| `just binary`  | Test the compiled binary by creating a sample project |
