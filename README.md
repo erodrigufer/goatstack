@@ -1,7 +1,5 @@
 # goatstack
 
-Golang + Templ - Greatest Of All Time Stack - GOlAngTemplStack
-
 A project scaffolding tool for creating Go + Templ web applications, similar to Create React App or Vite.
 
 ## Features
