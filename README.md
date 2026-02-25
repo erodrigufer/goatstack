@@ -1,24 +1,19 @@
 # goatstack
 
-A project scaffolding tool for creating Go + Templ web applications, similar to Create React App or Vite.
+A project scaffolding tool for creating `Go + templ + htmx` web applications, similar to Create React App or Vite.
 
-## Features
+`goatstack` creates a full-stack web application in pure Go.
+A single command generates all the required boilerplate to have a deployable project.
+You can then start working right away in your application's business logic, on your views or HTTP handlers.
 
-The created Go web applications have the following features:
-
-- **Full-stack Go Web Applications**: Backend + Frontend in pure Go
-  - **Templ Integration**: Modern HTML templating with Templ
-  - **HTMX Integration**: Dynamic frontend without complex JavaScript
-- **Database Support**: Integrated SQLite or PostgreSQL
-- **Production Ready**: Includes daemonization and deployment scripts for FreeBSD
-- **Development Tools**: Live reload with Air, comprehensive Justfile
+The generated Go backend uses exclusively the Go standard library, HTML templating is implemented with [templ](https://templ.guide/) and [htmx](https://htmx.org/) is vendored into the application.
 
 ## Prerequisites
 
 Before using `goatstack`, ensure you have the following dependencies installed:
 
-- **Go 1.26.0+**: Required for building the scaffolding tool and the generated projects
-- **just**: Command runner (used for build automation)
+- Go 1.26.0+: Required for building the scaffolding tool and the generated projects
+- just: Command runner
 
 ## Installation
 
@@ -26,7 +21,7 @@ Before using `goatstack`, ensure you have the following dependencies installed:
 just install
 ```
 
-This builds the binary and copies it to `~/bin`.
+This builds the `goatstack` binary and copies it to `~/bin`.
 
 `~/bin` should be in your `PATH` for `goatstack` to be accessible from your shell.
 
@@ -51,11 +46,11 @@ goatstack create --app <name> --module <module> --daemon <daemon> [--db <type>]
 goatstack create --app myproject --module codeberg.org/myproject --daemon myprojectd
 ```
 
-After creation, run `just dev` in the generated project to start developing.
+After creation, run `just dev` in a directory within the generated project to start developing.
 
 ## Generated Project Structure
 
-The scaffolding generates a comprehensive Go web application with the following structure:
+The generated Go web application has the following structure:
 
 ```
 myproject/
@@ -69,46 +64,28 @@ myproject/
 │   │   ├── state/              # Database queries
 │   │   ├── static/             # Static assets (CSS, JS)
 │   │   ├── views/              # Templ components/views
-│   │   └── web/                # Web utilities
+│   │   └── web/                # Web/HTTP utility functions
 │   ├── go.mod                  # Go module file
-│   └── .air.toml               # Live reload config
+│   └── .air.toml               # air live reload configuration
 ├── freebsd/
 │   ├── INSTALL.sh              # FreeBSD installation script
 │   └── myprojectd              # FreeBSD rc script
 ├── justfile
-├── .envrc                      # Environment setup
+├── .envrc                      # Environment variables setup
 ├── .gitignore
 └── README.md
 ```
 
-### Backend Features
+### Backend
 
-- **HTTP Server** with middleware (logging, security headers, authentication, session management)
-- **Database integration** (SQLite or PostgreSQL)
-- **Goroutine management**
-- **Email daemon** for sending emails with SMTP
-- **Configuration management** via environment variables
-- **Health checks** and basic endpoints
+The HTTP server, handlers and middlewares are implemented using primarily the Go standard library.
+It implements middleware functions to handle logging, security headers, authentication, session management and more.
 
-### Frontend Features
+`goatstack` can setup your project to work with either SQLite or PostgreSQL.
 
-- **Templ components** for HTML templating
-- **HTMX integration** for dynamic interactions withous JS
-- **CSS styling** with base styles
+The package `daemonize` implements functions to make managing goroutines easier.
 
-### Development Tools
-
-- **Air** for live reloading during development
-- **Comprehensive Justfile** with targets for:
-  - `just dev` - Start development server with live reloading
-  - `just build` - Build production binary
-  - `just test` - Run tests
-  - `just deploy` - Deployment scripts
-
-### Deployment
-
-- **FreeBSD rc script** to create a system daemon
-- **Installation script**
+`emaild` provides a daemon to periodically send emails through SMTP.
 
 ## Developing goatstack
 
@@ -117,7 +94,7 @@ Use the following just targets for working on `goatstack`:
 | Command        | Description                                           |
 | -------------- | ----------------------------------------------------- |
 | `just`         | List available targets                                |
-| `just build`   | Build the binary                                      |
+| `just build`   | Build the goatstack binary                            |
 | `just test`    | Run tests                                             |
 | `just vet`     | Run go vet                                            |
 | `just clean`   | Remove build and tmp folders                          |
@@ -126,12 +103,5 @@ Use the following just targets for working on `goatstack`:
 
 ## Limitations
 
-- Currently focused on FreeBSD deployment (rc scripts)
-- Limited to SQLite and PostgreSQL databases
-- Basic authentication middleware included but may need customization
-
-## Future Plans (maybe?)
-
-- Linux systemd service files?
-- Docker support
-- Additional Templ components and UI kits?
+- The project currently only provides rc scripts and shell scripts to deploy to FreeBSD.
+- The provided authentication middleware requires further customization by the user.
