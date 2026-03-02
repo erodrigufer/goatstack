@@ -31,6 +31,7 @@ build: vet test clean
 [group('install')]
 install : build
   @echo "Installing {{ APP_NAME }} on host..."
+  @mkdir -p "$HOME/bin"
   @cp {{ BUILD_TARGET }} ~/bin && echo "✅ {{ APP_NAME }} was successfully installed on host."
 
 # Test the compiled binary by creating a project and running vet on it.
