@@ -17,7 +17,7 @@ tidy:
 
 # Start the dev server with air.
 [group('go')]
-dev: tidy
+dev: tidy db-up
   cd backend && air
 
 # generate templ files.
@@ -65,6 +65,17 @@ sql:
 [group('sql')]
 sql:
   pgcli -u ${DB_USER} -d ${DB_NAME}
+
+# Run PostgreSQL container.
+[group('sql')]
+db-up:
+  @docker run -d --rm --name {{.MainName}}-postgres \
+    -e POSTGRES_USER=${DB_USER} \
+    -e POSTGRES_PASSWORD=${DB_PASSWORD} \
+    -e POSTGRES_DB=${DB_NAME} \
+    -p 5432:5432 \
+    postgres:18
+
 {{end}}
 
 # run database migrations.

@@ -5,5 +5,6 @@ export SQLITE_PATH="./db/database.sqlite3"
 {{else  if (eq .DB "postgres")}}
 export DB_USER="postgres"
 export DB_NAME="{{.MainName}}"
-export DB_CONN_STRING="postgres://${DB_USER}@localhost:5432/${DB_NAME}?sslmode=disable"
+export DB_PASSWORD="password"
+export DB_CONN_STRING="postgres://${DB_USER}:${DB_PASSWORD}@localhost:5432/${DB_NAME}?sslmode=disable"
 {{end}}
