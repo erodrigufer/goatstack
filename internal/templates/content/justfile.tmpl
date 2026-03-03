@@ -17,7 +17,7 @@ tidy:
 
 # Start the dev server with air.
 [group('go')]
-dev: tidy db-up
+dev: tidy {{if (eq .DB "postgres")}}db-start{{end}}
   cd backend && air
 
 # generate templ files.
@@ -66,16 +66,22 @@ sql:
 sql:
   pgcli -u ${DB_USER} -d ${DB_NAME}
 
-# Run PostgreSQL container.
+# Start PostgreSQL service using docker-compose.
 [group('sql')]
-db-up:
-  @docker run -d --rm --name {{.MainName}}-postgres \
-    -e POSTGRES_USER=${DB_USER} \
-    -e POSTGRES_PASSWORD=${DB_PASSWORD} \
-    -e POSTGRES_DB=${DB_NAME} \
-    -p 5432:5432 \
-    postgres:18
+db-start:
+  @docker compose up -d postgres
+  @echo "🆗 PostgreSQL service is running on port 5432"
 
+# Stop PostgreSQL service.
+[group('sql')]
+db-stop:
+  @docker compose down
+  @echo "⏹️ PostgreSQL service stopped"
+
+# Show PostgreSQL service status.
+[group('sql')]
+db-status:
+  @docker compose ps
 {{end}}
 
 # run database migrations.
