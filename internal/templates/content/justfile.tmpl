@@ -17,7 +17,7 @@ tidy:
 
 # Start the dev server with air.
 [group('go')]
-dev: tidy
+dev: tidy {{if (eq .DB "postgres")}}db-start{{end}}
   cd backend && air
 
 # generate templ files.
@@ -65,6 +65,25 @@ sql:
 [group('sql')]
 sql:
   pgcli -u ${DB_USER} -d ${DB_NAME}
+
+# Start PostgreSQL service using docker-compose.
+[group('sql')]
+db-start:
+  @docker compose up -d postgres
+  @echo "🕒 Waiting for PostgreSQL to be ready..."
+  @until docker compose exec postgres pg_isready -U ${DB_USER} -d ${DB_NAME}; do sleep 1; done
+  @echo "🆗 PostgreSQL service is running on port 5432 and ready for connections"
+
+# Stop PostgreSQL service.
+[group('sql')]
+db-stop:
+  @docker compose down
+  @echo "⏹️ PostgreSQL service stopped"
+
+# Show PostgreSQL service status.
+[group('sql')]
+db-status:
+  @docker compose ps
 {{end}}
 
 # run database migrations.
