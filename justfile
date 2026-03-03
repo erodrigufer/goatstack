@@ -35,8 +35,8 @@ install : build
 
 # Test the compiled binary by creating a project and running vet on it.
 [group('build')]
-binary: build
   @mkdir -p ./tmp
   @cd ./tmp && ../{{ BUILD_TARGET }} create --app testproject --module codeberg.org/testproject --daemon testprojectd
   @cd ./tmp && just vet
   @echo "✅ Binary test passed successfully."
+binary: clean build
