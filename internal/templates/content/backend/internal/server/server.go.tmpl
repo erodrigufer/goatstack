@@ -75,6 +75,10 @@ func NewApplication(ctx context.Context, requiredEnvVariables []string) (*Applic
 	app.sessionManager.Lifetime = 15 * 24 * time.Hour
 	app.sessionManager.IdleTimeout = 15 * 24 * time.Hour
 	app.sessionManager.Cookie.SameSite = http.SameSiteStrictMode // prevent CSRF attacks.
+	app.sessionManager.Cookie.HttpOnly = true                    // JS cannot access session cookie.
+	if environment == "prod" {
+		app.sessionManager.Cookie.Secure = true // Only send cookie over HTTPs.
+	}
 
 	err = app.setupServerParameters(app.sessionManager)
 	if err != nil {
