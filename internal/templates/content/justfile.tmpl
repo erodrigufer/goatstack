@@ -20,6 +20,11 @@ tidy:
 fix: templ
     cd backend && go fix ./...
 
+# interactive gomod upgrades.
+[group('go')]
+mod-update:
+    @cd backend && go-mod-upgrade
+
 # Start the dev server with air.
 [group('go')]
 dev: tidy {{if (eq .DB "postgres")}}db-start{{end}}
