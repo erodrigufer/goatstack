@@ -15,6 +15,11 @@ vet: templ tidy
 tidy:
   @cd backend && go mod tidy && echo "🆗 go mod tidy was successfully executed."
 
+# go fix.
+[group('go')]
+fix: templ
+    cd backend && go fix ./...
+
 # Start the dev server with air.
 [group('go')]
 dev: tidy {{if (eq .DB "postgres")}}db-start{{end}}
