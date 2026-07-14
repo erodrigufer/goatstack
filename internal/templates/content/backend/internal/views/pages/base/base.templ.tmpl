@@ -25,8 +25,8 @@ templ Base() {
 			<meta name="theme-color" content="hsl(220, 24%, 10%)"/>
 			<link rel="stylesheet" href="/content/base.css"/>
 			<title>{{.MainName}}</title>
-			<script src="/content/htmx.2.0.6.min.js"></script>
-			<script src="/content/htmx-ext-response-targets.2.0.2.js"></script>
+			<script defer src="/content/htmx.2.0.6.min.js"></script>
+			<script defer src="/content/htmx-ext-response-targets.2.0.2.js"></script>
 		</head>
 		<body hx-ext="response-targets">
 			<h1 class={ h1() }>{{.MainName}}</h1>
