@@ -88,46 +88,6 @@ func NewApplication(ctx context.Context, requiredEnvVariables []string) (*Applic
 	return app, nil
 }
 
-{{if (eq .DB "sqlite")}}
-func (app *Application) startDBConnection(ctx context.Context) error {
-	sqliteDBPath, err := app.GetConfigValueString("SQLITE_PATH")
-	if err != nil {
-		return fmt.Errorf("unable to get SQLITE_PATH env. variable: %w", err)
-	}
-
-	app.db, err = sql.Open("sqlite", sqliteDBPath)
-	if err != nil {
-		return fmt.Errorf("unable to establish a connection with DB: %w", err)
-	}
-
-	if err := app.db.PingContext(ctx); err != nil {
-		return fmt.Errorf("unable to ping db: %w", err)
-	}
-
-	app.InfoLog.Info("Successfully pinged sqlite3 db", slog.String("sqlite_file_path", sqliteDBPath))
-	return nil
-}
-{{else  if (eq .DB "postgres")}}
-func (app *Application) startDBConnection(ctx context.Context) error {
-	dbConnString, err := app.GetConfigValueString("DB_CONN_STRING")
-	if err != nil {
-		return fmt.Errorf("unable to get DB_CONN_STRING env. variable: %w", err)
-	}
-
-	app.db, err = pgxpool.New(ctx, dbConnString)
-	if err != nil {
-		return fmt.Errorf("could not establish database connection pool: %w", err)
-	}
-	err = app.db.Ping(ctx)
-	if err != nil {
-		return fmt.Errorf("database is unreachable: %w", err)
-	}
-
-	app.InfoLog.Info("Successfully pinged postgres db")
-  return nil
-}
-{{end}}
-
 // StartServerWithGracefulShutdown starts a server and gracefully handles shutdowns.
 // If the server receives a signal the backend knows that it should
 // start the process of gracefully shutting down, i.e. closing DB connections and
