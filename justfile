@@ -19,12 +19,12 @@ vet:
 
 # go test.
 [group('go')]
-test:
+go-test:
     go tool gotest ./...
 
 # go build.
 [group('build')]
-build: vet test clean
+build: vet go-test clean
     @go build -o {{ BUILD_TARGET }} ./cmd/{{ APP_NAME }} && echo "🆗 {{ APP_NAME }} was successfully built."
 
 # Install on host.
@@ -35,8 +35,13 @@ install: build
 
 # Test the compiled binary by creating a project and running vet on it.
 [group('build')]
-binary: clean build
+test: clean build
     @mkdir -p ./tmp
-    @cd ./tmp && ../{{ BUILD_TARGET }} create --app testproject --module codeberg.org/testproject --daemon testprojectd
+    @cd ./tmp && ../{{ BUILD_TARGET }} create --app testproject --module codeberg.org/testproject --db postgres --daemon testprojectd
     @cd ./tmp && just vet
-    @echo "✅ Binary test passed successfully."
+    @echo "✅ Binary test for postgres passed successfully."
+    @rm -rf ./tmp
+    @mkdir -p ./tmp
+    @cd ./tmp && ../{{ BUILD_TARGET }} create --app testproject --module codeberg.org/testproject --db sqlite --daemon testprojectd
+    @cd ./tmp && just vet
+    @echo "✅ Binary test for sqlite passed successfully."
