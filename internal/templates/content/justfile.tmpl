@@ -97,9 +97,9 @@ db-status:
 {{end}}
 
 # run database migrations.
-# [group('sql')]
-# migrate: 
-#     dbmate {{"{{"}}DBMATE_GENERAL_OPTIONS{{"}}"}} up
+ [group('sql')]
+migrate: 
+    dbmate {{"{{"}}DBMATE_GENERAL_OPTIONS{{"}}"}} up
 
 # rollback the last database migration.
 [group('sql')]
