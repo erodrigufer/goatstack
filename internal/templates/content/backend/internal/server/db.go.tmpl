@@ -29,39 +29,76 @@ func (app *Application) startDBConnection(ctx context.Context) error {
 		return fmt.Errorf("unable to ping db: %w", err)
 	}
 
-	journalModeRow := app.db.QueryRowContext(ctx, "PRAGMA journal_mode = WAL;")
-	var journalMode string
-	err = journalModeRow.Scan(&journalMode)
+	journalMode, err := setStringPragma(ctx, "journal_mode", "WAL", app.db)
 	if err != nil {
-		return fmt.Errorf("unable to scan journal_mode PRAGMA: %w", err)
+		return fmt.Errorf("unable to set PRAGMA: %w", err)
 	}
 	if journalMode != "wal" {
 		return fmt.Errorf("sqlite is not running in WAL mode")
 	}
 
-	_, err = app.db.ExecContext(ctx, "PRAGMA foreign_keys = ON;")
+	synchronousNormalSet, err := setBooleanPragma(ctx, "synchronous", "normal", app.db)
 	if err != nil {
-		return fmt.Errorf("unable to set foreign_keys mode: %w", err)
+		return fmt.Errorf("unable to set PRAGMA: %w", err)
+	}
+	if !synchronousNormalSet {
+		return fmt.Errorf("sqlite is not running in normal synchronous mode")
 	}
 
-	foreignKeysRow := app.db.QueryRowContext(ctx, "PRAGMA foreign_keys;")
-	var foreignKeysValue int
-	err = foreignKeysRow.Scan(&foreignKeysValue)
+	foreignKeysSet, err := setBooleanPragma(ctx, "foreign_keys", "ON", app.db)
 	if err != nil {
-		return fmt.Errorf("unable to scan foreign_keys PRAGMA: %w", err)
+		return fmt.Errorf("unable to set foreign_keys PRAGMA: %w", err)
 	}
-	var foreignKeys bool
-	if foreignKeysValue == 1 {
-		foreignKeys = true
-	} else {
+	if !foreignKeysSet {
 		return fmt.Errorf("unable to run DB connection on foreign_keys mode")
 	}
 
 	app.InfoLog.Info("successfully pinged sqlite3 db",
 		slog.String("sqlite_file_path", sqliteDBPath),
 		slog.String("journal_mode", journalMode),
-		slog.Bool("foreign_keys", foreignKeys))
+		slog.Bool("synchronous_normal_mode", synchronousNormalSet),
+		slog.Bool("foreign_keys", foreignKeysSet))
 	return nil
+}
+
+func setBooleanPragma(ctx context.Context, key, value string, db *sql.DB) (bool, error) {
+	row, err := executePragmaQuery(ctx, key, value, db)
+	if err != nil {
+		return false, fmt.Errorf("unable to execute pragma query: %w", err)
+	}
+	var rowValue int
+	err = row.Scan(&rowValue)
+	if err != nil {
+		return false, fmt.Errorf("unable to scan %s PRAGMA: %w", key, err)
+	}
+	var pragmaValue bool
+	if rowValue == 1 {
+		pragmaValue = true
+	}
+	return pragmaValue, nil
+}
+
+func setStringPragma(ctx context.Context, key, value string, db *sql.DB) (string, error) {
+	row, err := executePragmaQuery(ctx, key, value, db)
+	if err != nil {
+		return "", fmt.Errorf("unable to execute pragma query: %w", err)
+	}
+	var pragmaValue string
+	err = row.Scan(&pragmaValue)
+	if err != nil {
+		return "", fmt.Errorf("unable to scan %s PRAGMA: %w", key, err)
+	}
+	return pragmaValue, nil
+}
+
+func executePragmaQuery(ctx context.Context, key, value string, db *sql.DB) (*sql.Row, error) {
+	query := fmt.Sprintf("PRAGMA %s = %s;", key, value)
+	_, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("unable to set %s PRAGMA: %w", key, err)
+	}
+
+	return db.QueryRowContext(ctx, "PRAGMA "+key+";"), nil
 }
 {{else  if (eq .DB "postgres")}}
 func (app *Application) startDBConnection(ctx context.Context) error {
