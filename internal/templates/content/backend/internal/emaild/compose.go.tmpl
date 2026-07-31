@@ -1,8 +1,20 @@
 package mailer
 
-func Compose(subject, body string) Email {
+// Compose creates a plain-text email.
+func Compose(recipient, subject, body string) Email {
 	return Email{
-		Subject: subject,
-		Body:    body,
+		Recipient: recipient,
+		Subject:   subject,
+		Body:      body,
+	}
+}
+
+// ComposeWithHTML creates a multipart email with both plain-text and HTML bodies.
+func ComposeWithHTML(recipient, subject, body, htmlBody string) Email {
+	return Email{
+		Recipient: recipient,
+		Subject:   subject,
+		Body:      body,
+		HTMLBody:  htmlBody,
 	}
 }

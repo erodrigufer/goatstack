@@ -15,34 +15,45 @@ import (
 const totalRetries = 4
 
 type Email struct {
-	Subject string
-	Body    string
+	// Recipient is the email address that will receive the email,
+	// e.g. "oriol@romeu.cat".
+	Recipient string
+	Subject   string
+	Body      string
+	// HTMLBody is an optional HTML version of the email.
+	// When set, the email is sent as multipart (plain text + HTML alternative).
+	HTMLBody string
 }
 
 type mailer struct {
 	client *mail.Client
 	// sender is the email address that will be used as the sender,
 	// e.g. as "Jaume Romeu <jaume@romeu.cat>"
-	sender string
-	// recipient is the email address that will receive the emails,
-	// e.g. as "oriol@romeu.cat"
-	recipient string
-	infoLog   *slog.Logger
-	errorLog  *slog.Logger
-	emailsCh  <-chan Email
+	sender   string
+	infoLog  *slog.Logger
+	errorLog *slog.Logger
+	emailsCh <-chan Email
 }
 
 // Start initializes a new Mailer and starts a daemon that will send all emails it receives on the returned channel.
-func Start(ctx context.Context, host string, port int, username, password, sender, recipient string, infoLog, errorLog *slog.Logger) (chan<- Email, error) {
-	client, err := mail.NewClient(
-		host,
+func Start(ctx context.Context, host string, port int, username, password, sender string, infoLog, errorLog *slog.Logger) (chan<- Email, error) {
+	opts := []mail.Option{
 		mail.WithSMTPAuth(mail.SMTPAuthLogin),
 		mail.WithPort(port),
 		mail.WithUsername(username),
 		mail.WithPassword(password),
 		// Timeout is used in DialAndSendWithContext.
-		mail.WithTimeout(7*time.Second),
-	)
+		mail.WithTimeout(10 * time.Second),
+	}
+
+	// Port 465 uses implicit TLS (SSL), port 587 uses STARTTLS.
+	if port == 465 {
+		opts = append(opts, mail.WithSSL())
+	} else {
+		opts = append(opts, mail.WithTLSPortPolicy(mail.TLSMandatory))
+	}
+
+	client, err := mail.NewClient(host, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mail client: %w", err)
 	}
@@ -53,12 +64,11 @@ func Start(ctx context.Context, host string, port int, username, password, sende
 	emailsCh := make(chan Email)
 
 	mailer := &mailer{
-		client:    client,
-		sender:    sender,
-		recipient: recipient,
-		infoLog:   infoLog,
-		errorLog:  errorLog,
-		emailsCh:  emailsCh,
+		client:   client,
+		sender:   sender,
+		infoLog:  infoLog,
+		errorLog: errorLog,
+		emailsCh: emailsCh,
 	}
 
 	mailer.startMailerDaemon(ctx)
@@ -66,9 +76,9 @@ func Start(ctx context.Context, host string, port int, username, password, sende
 	return emailsCh, nil
 }
 
-func (m *mailer) send(ctx context.Context, recipient string, email Email) error {
+func (m *mailer) send(ctx context.Context, email Email) error {
 	message := mail.NewMsg()
-	err := message.To(recipient)
+	err := message.To(email.Recipient)
 	if err != nil {
 		return fmt.Errorf("failed to set recipient: %w", err)
 	}
@@ -80,17 +90,20 @@ func (m *mailer) send(ctx context.Context, recipient string, email Email) error 
 	message.Subject(email.Subject)
 
 	message.SetBodyString(mail.TypeTextPlain, email.Body)
+	if email.HTMLBody != "" {
+		message.AddAlternativeString(mail.TypeTextHTML, email.HTMLBody)
+	}
 
 	waitRetry := 2 * time.Minute
 
-	m.infoLog.Info("sending email", slog.String("recipient", recipient), slog.String("subject", email.Subject))
+	m.infoLog.Info("sending email", slog.String("recipient", email.Recipient), slog.String("subject", email.Subject))
 	for i := range totalRetries {
 		err = m.client.DialAndSendWithContext(ctx, message)
 		if err == nil {
 			return nil
 		}
 		if i != totalRetries-1 {
-			m.errorLog.Error("failed to send email", slog.String("recipient", recipient), slog.String("subject", email.Subject),
+			m.errorLog.Error("failed to send email", slog.String("recipient", email.Recipient), slog.String("subject", email.Subject),
 				slog.String("error", err.Error()), slog.Duration("wait_retry", waitRetry), slog.Int("total_retries", totalRetries))
 			time.Sleep(waitRetry)
 		}
