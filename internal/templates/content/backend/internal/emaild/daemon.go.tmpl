@@ -20,13 +20,25 @@ func (m *mailer) startMailerDaemon(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case email := <-m.emailsCh:
-				m.infoLog.Info("received an email to send on emailsCh", slog.String("recipient", email.Recipient), slog.String("subject", email.Subject))
-				err := m.send(ctx, email)
-				if err != nil {
-					m.errorLog.Error("failed to send email", slog.String("error_message", err.Error()))
-					continue
-				}
-				m.infoLog.Info("email succesfully sent", slog.String("recipient", email.Recipient), slog.String("subject", email.Subject))
+				m.infoLog.Info("received an email to send on emailsCh",
+					slog.String("recipient", email.Recipient),
+					slog.String("subject", email.Subject))
+				m.sem <- struct{}{}
+				daemonize.Task(func() {
+					// Free one slot in the semaphore channel.
+					defer func() { <-m.sem }()
+					err := m.sendWithRetries(ctx, email)
+					if err != nil {
+						m.errorLog.Error("failed to send email",
+							slog.String("error_message", err.Error()),
+							slog.String("recipient", email.Recipient),
+							slog.String("subject", email.Subject))
+						return
+					}
+					m.infoLog.Info("email successfully sent",
+						slog.String("recipient", email.Recipient),
+						slog.String("subject", email.Subject))
+				}, "send-email", m.errorLog)
 			}
 		}
 	}

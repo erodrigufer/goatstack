@@ -14,6 +14,10 @@ import (
 // an email before giving up.
 const totalRetries = 4
 
+// maxConcurrentSends is the maximum number of emails
+// that can be sent concurrently.
+const maxConcurrentSends = 10
+
 type Email struct {
 	// Recipient is the email address that will receive the email,
 	// e.g. "oriol@romeu.cat".
@@ -33,6 +37,8 @@ type mailer struct {
 	infoLog  *slog.Logger
 	errorLog *slog.Logger
 	emailsCh <-chan Email
+	// sem is a semaphore that limits the number of concurrent email sends.
+	sem chan struct{}
 }
 
 // Start initializes a new Mailer and starts a daemon that will send all emails it receives on the returned channel.
@@ -69,6 +75,7 @@ func Start(ctx context.Context, host string, port int, username, password, sende
 		infoLog:  infoLog,
 		errorLog: errorLog,
 		emailsCh: emailsCh,
+		sem:      make(chan struct{}, maxConcurrentSends),
 	}
 
 	mailer.startMailerDaemon(ctx)
@@ -76,7 +83,7 @@ func Start(ctx context.Context, host string, port int, username, password, sende
 	return emailsCh, nil
 }
 
-func (m *mailer) send(ctx context.Context, email Email) error {
+func (m *mailer) sendWithRetries(ctx context.Context, email Email) error {
 	message := mail.NewMsg()
 	err := message.To(email.Recipient)
 	if err != nil {
@@ -96,15 +103,22 @@ func (m *mailer) send(ctx context.Context, email Email) error {
 
 	waitRetry := 2 * time.Minute
 
-	m.infoLog.Info("sending email", slog.String("recipient", email.Recipient), slog.String("subject", email.Subject))
+	m.infoLog.Info("sending email", 
+    slog.String("recipient", email.Recipient), 
+    slog.String("subject", email.Subject))
+
 	for i := range totalRetries {
 		err = m.client.DialAndSendWithContext(ctx, message)
 		if err == nil {
 			return nil
 		}
 		if i != totalRetries-1 {
-			m.errorLog.Error("failed to send email", slog.String("recipient", email.Recipient), slog.String("subject", email.Subject),
-				slog.String("error", err.Error()), slog.Duration("wait_retry", waitRetry), slog.Int("total_retries", totalRetries))
+			m.errorLog.Error("failed to send email", 
+        slog.String("recipient", email.Recipient), 
+        slog.String("subject", email.Subject),
+				slog.String("error", err.Error()), 
+        slog.String("wait_retry", waitRetry.String()), 
+        slog.Int("total_retries", totalRetries))
 			time.Sleep(waitRetry)
 		}
 	}
