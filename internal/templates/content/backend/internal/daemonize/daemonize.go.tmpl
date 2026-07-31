@@ -7,14 +7,27 @@ import (
 	"time"
 )
 
-// Daemonize securely runs a function in the background.
+// Daemonize securely runs a long-lived function (daemon) concurrently
+// in a goroutine.
 func Daemonize(fn func(), name string, errorLogger *slog.Logger) {
+	run(fn, "daemon", name, errorLogger)
+}
+
+// Task securely runs a one-shot function concurrently
+// in a goroutine.
+func Task(fn func(), name string, errorLogger *slog.Logger) {
+	run(fn, "task", name, errorLogger)
+}
+
+// run executes a function securely in a goroutine by recovering any panics that
+// the function might trigger.
+// kind determines the kind of function that is being executed, e.g. `daemon` or `task`.
+func run(fn func(), kind, name string, errorLogger *slog.Logger) {
 	go func() {
 		defer func() {
-			pv := recover()
-			if pv != nil {
+			if pv := recover(); pv != nil {
 				pvString := fmt.Sprintf("%v", pv)
-				errorLogger.Error("daemon panicked, but was recovered", slog.String("daemon", name), slog.String("panic_value", pvString))
+				errorLogger.Error(kind+" panicked, but was recovered", slog.String(kind, name), slog.String("panic_value", pvString))
 			}
 		}()
 
