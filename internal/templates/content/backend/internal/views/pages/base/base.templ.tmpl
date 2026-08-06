@@ -23,6 +23,8 @@ templ Base() {
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<meta name="theme-color" content="hsl(220, 24%, 10%)"/>
+			<meta name="htmx-config" content='{"allowEval":"false"}'/>
+			<meta name="htmx-config" content='{"allowScriptTags":"false"}'/>
 			<link rel="stylesheet" href="/content/base.css"/>
 			<title>{{.MainName}}</title>
 			<script defer src="/content/htmx.2.0.6.min.js"></script>
