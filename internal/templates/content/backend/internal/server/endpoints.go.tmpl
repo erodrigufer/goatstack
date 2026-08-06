@@ -28,7 +28,7 @@ func (app *Application) defineEndpoints(sessionManager *scs.SessionManager) (htt
 	csrfProtection := http.NewCrossOriginProtection()
 
 	middlewareChain := func(next http.Handler) http.Handler {
-		return m.RecoverPanic(m.SecureHeaders(m.LogRequest(csrfProtection.Handler(sessionManager.LoadAndSave(next)))))
+		return m.RecoverPanic(m.LogRequest(csrfProtection.Handler(sessionManager.LoadAndSave(next))))
 	}
 	
   // TODO: Create /login view.
