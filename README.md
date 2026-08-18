@@ -23,9 +23,9 @@ The following dependencies are either required or would facilitate working with 
 just install
 ```
 
-This builds the `goatstack` binary and copies it to `~/bin`.
+This builds the `goatstack` binary and copies it to `/usr/local/bin`.
 
-`~/bin` should be in your `PATH` for `goatstack` to be accessible from your shell.
+`/usr/local/bin` should be in your `PATH` for `goatstack` to be accessible from your shell.
 
 ## Usage
 

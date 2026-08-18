@@ -2,6 +2,7 @@ set shell := ["/bin/sh", "-c"]
 
 APP_NAME := "goatstack"
 BUILD_TARGET := "./build/" + APP_NAME
+INSTALL_DIRECTORY := "/usr/local/bin"
 
 # List available just targets.
 default:
@@ -31,7 +32,7 @@ build: vet go-test clean
 [group('install')]
 install: build
     @echo "Installing {{ APP_NAME }} on host..."
-    @cp {{ BUILD_TARGET }} ~/bin && echo "✅ {{ APP_NAME }} was successfully installed on host."
+    @cp {{ BUILD_TARGET }} {{ INSTALL_DIRECTORY }} && echo "✅ {{ APP_NAME }} was successfully installed on host at {{ INSTALL_DIRECTORY }}."
 
 # Test the compiled binary by creating a project and running vet on it.
 [group('build')]
